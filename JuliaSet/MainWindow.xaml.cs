@@ -99,6 +99,11 @@ namespace JuliaSet {
 #endif
 
       iter.Resized += delegate (int width, int height, long length) {
+        Progress.IsIndeterminate = true;
+
+        Progress.Visibility = Visibility.Visible;
+        PaletteImg.Visibility = Visibility.Hidden;
+
         TaskbarInfo.ProgressState = TaskbarItemProgressState.Indeterminate;
       };
 
@@ -112,6 +117,14 @@ namespace JuliaSet {
               iter.CenterX,
               iter.CenterY,
               exp);
+
+            Progress.IsIndeterminate = false;
+            Progress.Value = e2.Progress;
+
+            if (e2.IsDone) {
+              Progress.Visibility = Visibility.Hidden;
+              PaletteImg.Visibility = Visibility.Visible;
+            }
 
             TaskbarInfo.ProgressState = e2.IsDone ? TaskbarItemProgressState.None : TaskbarItemProgressState.Normal;
             TaskbarInfo.ProgressValue = e2.Progress;

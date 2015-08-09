@@ -113,10 +113,14 @@
           </DrawingBrush>
         </Rectangle.Fill>
       </Rectangle>
+      <ProgressBar Name="Progress"
+                   Visibility="Hidden"
+                   Maximum="1" />
       <Image Name="PaletteImg"
              Stretch="Uniform"
              HorizontalAlignment="Center"
-             VerticalAlignment="Center" />
+             VerticalAlignment="Center"
+             Visibility="Visible" />
     </Grid>
   </Grid>
 </Window>
