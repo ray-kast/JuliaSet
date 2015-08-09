@@ -92,7 +92,7 @@
         </Rectangle.Effect>
       </Rectangle>
       <Grid Name="Palette"
-            Visibility="Visible">
+            Visibility="Hidden">
         <Rectangle>
           <Rectangle.Fill>
             <DrawingBrush TileMode="Tile"
@@ -121,7 +121,7 @@
              VerticalAlignment="Center" />
       </Grid>
       <ProgressBar Name="Progress"
-                   Visibility="Hidden"
+                   Visibility="Visible"
                    Maximum="1" />
     </Grid>
   </Grid>
