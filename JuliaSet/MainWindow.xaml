@@ -91,36 +91,38 @@
                       RenderingBias="Performance" />
         </Rectangle.Effect>
       </Rectangle>
-      <Rectangle>
-        <Rectangle.Fill>
-          <DrawingBrush TileMode="Tile"
+      <Grid Name="Palette"
+            Visibility="Visible">
+        <Rectangle>
+          <Rectangle.Fill>
+            <DrawingBrush TileMode="Tile"
                         ViewportUnits="Absolute"
                         Viewport="0,0 16,16">
-            <DrawingBrush.Drawing>
-              <DrawingGroup>
-                <GeometryDrawing Brush="LightGray">
-                  <GeometryDrawing.Geometry>
-                    <RectangleGeometry Rect="0,0 2,2" />
-                  </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-                <GeometryDrawing Brush="DarkGray">
-                  <GeometryDrawing.Geometry>
-                    <PathGeometry Figures="M 1,0 L 2,0 L 2,1 L 0,1 L 0,2 L 1,2 Z" />
-                  </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-              </DrawingGroup>
-            </DrawingBrush.Drawing>
-          </DrawingBrush>
-        </Rectangle.Fill>
-      </Rectangle>
+              <DrawingBrush.Drawing>
+                <DrawingGroup>
+                  <GeometryDrawing Brush="LightGray">
+                    <GeometryDrawing.Geometry>
+                      <RectangleGeometry Rect="0,0 2,2" />
+                    </GeometryDrawing.Geometry>
+                  </GeometryDrawing>
+                  <GeometryDrawing Brush="DarkGray">
+                    <GeometryDrawing.Geometry>
+                      <PathGeometry Figures="M 1,0 L 2,0 L 2,1 L 0,1 L 0,2 L 1,2 Z" />
+                    </GeometryDrawing.Geometry>
+                  </GeometryDrawing>
+                </DrawingGroup>
+              </DrawingBrush.Drawing>
+            </DrawingBrush>
+          </Rectangle.Fill>
+        </Rectangle>
+        <Image Name="PaletteImg"
+             Stretch="Uniform"
+             HorizontalAlignment="Center"
+             VerticalAlignment="Center" />
+      </Grid>
       <ProgressBar Name="Progress"
                    Visibility="Hidden"
                    Maximum="1" />
-      <Image Name="PaletteImg"
-             Stretch="Uniform"
-             HorizontalAlignment="Center"
-             VerticalAlignment="Center"
-             Visibility="Visible" />
     </Grid>
   </Grid>
 </Window>

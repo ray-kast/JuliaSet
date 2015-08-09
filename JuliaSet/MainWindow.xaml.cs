@@ -102,7 +102,7 @@ namespace JuliaSet {
         Progress.IsIndeterminate = true;
 
         Progress.Visibility = Visibility.Visible;
-        PaletteImg.Visibility = Visibility.Hidden;
+        Palette.Visibility = Visibility.Hidden;
 
         TaskbarInfo.ProgressState = TaskbarItemProgressState.Indeterminate;
       };
@@ -123,7 +123,7 @@ namespace JuliaSet {
 
             if (e2.IsDone) {
               Progress.Visibility = Visibility.Hidden;
-              PaletteImg.Visibility = Visibility.Visible;
+              Palette.Visibility = Visibility.Visible;
             }
 
             TaskbarInfo.ProgressState = e2.IsDone ? TaskbarItemProgressState.None : TaskbarItemProgressState.Normal;
