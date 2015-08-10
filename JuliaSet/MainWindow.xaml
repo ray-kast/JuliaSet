@@ -120,9 +120,18 @@
              HorizontalAlignment="Center"
              VerticalAlignment="Center" />
       </Grid>
-      <ProgressBar Name="Progress"
-                   Visibility="Visible"
-                   Maximum="1" />
+      <Grid Name="Progress"
+            Visibility="Visible">
+        <ProgressBar Name="MaxProgress"
+                   Maximum="1"
+                   Foreground="CornflowerBlue" />
+
+        <ProgressBar Name="MinProgress"
+                     Maximum="1"
+                     Foreground="YellowGreen"
+                     Background="{x:Null}"
+                     BorderBrush="{x:Null}" />
+      </Grid>
     </Grid>
   </Grid>
 </Window>

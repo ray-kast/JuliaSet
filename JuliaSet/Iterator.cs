@@ -12,7 +12,7 @@ namespace JuliaSet {
   class IteratedEventArgs : EventArgs {
     int width, height;
     long length, curr;
-    double progress;
+    double progress, pixelProg, iterProg;
     bool areAnyAlive, didAnyDie, isDone;
 
     public int Width { get { return width; } }
@@ -20,16 +20,20 @@ namespace JuliaSet {
     public long Length { get { return length; } }
     public long Current { get { return curr; } }
     public double Progress { get { return progress; } }
+    public double PixelProgress { get { return pixelProg; } }
+    public double IterProgress { get { return iterProg; } }
     public bool AreAnyAlive { get { return areAnyAlive; } }
     public bool DidAnyDie { get { return didAnyDie; } }
     public bool IsDone { get { return isDone; } }
 
-    public IteratedEventArgs(int width, int height, long length, long curr, double progress, bool areAnyAlive, bool didAnyDie, bool isDone) {
+    public IteratedEventArgs(int width, int height, long length, long curr, double progress, double pixelProg, double iterProg, bool areAnyAlive, bool didAnyDie, bool isDone) {
       this.width = width;
       this.height = height;
       this.length = length;
       this.curr = curr;
       this.progress = progress;
+      this.pixelProg = pixelProg;
+      this.iterProg = iterProg;
       this.areAnyAlive = areAnyAlive;
       this.didAnyDie = didAnyDie;
       this.isDone = isDone;

@@ -88,7 +88,9 @@ namespace JuliaSet {
               doRepop = false;
               i = 0;
 
-              if (iterated != null) iterated(this, new IteratedEventArgs(width, height, length, 0, areAnyAlive ? 0 : 1, areAnyAlive, didAnyDie, !areAnyAlive));
+              double pixelProg = (double)numDead / length;
+
+              if (iterated != null) iterated(this, new IteratedEventArgs(width, height, length, 0, pixelProg, pixelProg, 0, areAnyAlive, didAnyDie, !areAnyAlive));
             }
           }
           else {
@@ -115,7 +117,10 @@ namespace JuliaSet {
               }
             }
 
-            if (iterated != null) iterated(this, new IteratedEventArgs(width, height, length, i, Math.Max((double)i / iters, (double)numDead / length), areAnyAlive, didAnyDie, (i >= iters - 1) || !areAnyAlive));
+            double pixelProg = (double)numDead / length,
+              iterProg = (double)i / iters;
+
+            if (iterated != null) iterated(this, new IteratedEventArgs(width, height, length, i, Math.Max(pixelProg, iterProg), pixelProg, iterProg, areAnyAlive, didAnyDie, (i >= iters - 1) || !areAnyAlive));
 
             i++;
           }

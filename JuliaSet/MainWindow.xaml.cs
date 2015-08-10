@@ -99,7 +99,8 @@ namespace JuliaSet {
 #endif
 
       iter.Resized += delegate (int width, int height, long length) {
-        Progress.IsIndeterminate = true;
+        MinProgress.IsIndeterminate =
+          MaxProgress.IsIndeterminate = true;
 
         Progress.Visibility = Visibility.Visible;
         Palette.Visibility = Visibility.Hidden;
@@ -118,8 +119,10 @@ namespace JuliaSet {
               iter.CenterY,
               exp);
 
-            Progress.IsIndeterminate = false;
-            Progress.Value = e2.Progress;
+            MinProgress.IsIndeterminate =
+              MaxProgress.IsIndeterminate = false;
+            MinProgress.Value = Math.Min(e2.PixelProgress, e2.IterProgress);
+            MaxProgress.Value = Math.Max(e2.PixelProgress, e2.IterProgress);
 
             if (e2.IsDone) {
               Progress.Visibility = Visibility.Hidden;
