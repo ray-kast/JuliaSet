@@ -91,8 +91,7 @@
                       RenderingBias="Performance" />
         </Rectangle.Effect>
       </Rectangle>
-      <Grid Name="Palette"
-            Visibility="Hidden">
+      <Grid Name="Palette">
         <Rectangle>
           <Rectangle.Fill>
             <DrawingBrush TileMode="Tile"
@@ -122,9 +121,37 @@
       </Grid>
       <Grid Name="Progress"
             Visibility="Visible">
+        <Grid.Style>
+          <Style TargetType="{x:Type Grid}">
+            <Style.Triggers>
+              <EventTrigger RoutedEvent="MouseEnter">
+                <StopStoryboard BeginStoryboardName="Show" />
+                  <BeginStoryboard Name="Hide">
+                  <Storyboard>
+                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                     To="0"
+                                     Duration="0:0:0.2"
+                                     DecelerationRatio=".5" />
+                  </Storyboard>
+                </BeginStoryboard>
+              </EventTrigger>
+              <EventTrigger RoutedEvent="MouseLeave">
+                <StopStoryboard BeginStoryboardName="Hide" />
+                <BeginStoryboard Name="Show">
+                  <Storyboard>
+                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                     To="1"
+                                     Duration="0:0:0.2"
+                                     AccelerationRatio=".5" />
+                  </Storyboard>
+                </BeginStoryboard>
+              </EventTrigger>
+            </Style.Triggers>
+          </Style>
+        </Grid.Style>
         <ProgressBar Name="MaxProgress"
-                   Maximum="1"
-                   Foreground="CornflowerBlue" />
+                     Maximum="1"
+                     Foreground="CornflowerBlue" />
 
         <ProgressBar Name="MinProgress"
                      Maximum="1"

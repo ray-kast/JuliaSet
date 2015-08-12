@@ -48,6 +48,65 @@ namespace JuliaSet {
     public FloatColor(float a, float r, float g, float b) {
       comps = new float[] { b, g, r, a };
     }
+
+    public FloatColor Saturate() {
+      return new FloatColor(
+        Math.Max(0, Math.Min(1, this.A)),
+        Math.Max(0, Math.Min(1, this.R)),
+        Math.Max(0, Math.Min(1, this.G)),
+        Math.Max(0, Math.Min(1, this.B)));
+    }
+
+    public static FloatColor operator +(FloatColor a, FloatColor b) {
+      return new FloatColor(a.A + b.A, a.R + b.R, a.G + b.G, a.B + b.B);
+    }
+
+    public static FloatColor operator - (FloatColor a, FloatColor b) {
+      return new FloatColor(a.A - b.A, a.R - b.R, a.G - b.G, a.B - b.B);
+    }
+
+    public static FloatColor operator *(FloatColor a, float b) {
+      return new FloatColor(a.A * b, a.R * b, a.G * b, a.B * b);
+    }
+
+    public static FloatColor operator *(float b, FloatColor a) => a * b;
+
+    public static FloatColor operator *(FloatColor a, FloatColor b) {
+      return new FloatColor(a.A * b.A, a.R * b.R, a.G * b.G, a.B * b.B);
+    }
+
+    public static FloatColor operator /(FloatColor a, float b) {
+      return new FloatColor(a.A / b, a.R / b, a.G / b, a.B / b);
+    }
+
+    public static FloatColor operator /(float b, FloatColor a) => a / b;
+
+    public static FloatColor operator /(FloatColor a, FloatColor b) {
+      return new FloatColor(a.A / b.A, a.R / b.R, a.G / b.G, a.B / b.B);
+    }
+
+    public static FloatColor operator %(FloatColor a, float b) {
+      return new FloatColor(a.A % b, a.R % b, a.G % b, a.B % b);
+    }
+
+    public static FloatColor operator %(float b, FloatColor a) => a % b;
+
+    public static implicit operator FloatColor(Color color) {
+      return new FloatColor(color.ScA, color.ScR, color.ScG, color.ScB);
+    }
+
+    public static implicit operator float[](FloatColor color) {
+      return color.Comps;
+    }
+
+    public static implicit operator byte[](FloatColor color) {
+      return (from comp in color.Saturate().Comps
+              select (byte)(comp * 255)).ToArray();
+    }
+
+    public override string ToString() {
+      return $"{{{A}, {R}, {G}, {B}}}";
+    }
   }
 
   delegate void VisVisualizeEvent(Visualizer vis);
@@ -68,7 +127,7 @@ namespace JuliaSet {
     bool isDone;
     double[] result;
     bool[] isAlive;
-    FloatColor[] palette;
+    FloatColor[] palette, c1, c2;
     FloatColor liveClr;
     VisPaletteType paletteType;
 
@@ -77,13 +136,6 @@ namespace JuliaSet {
     event PropertyChangedEventHandler propChanged;
 
     event VisVisualizeEvent visualized;
-
-    public Color[] Palette {
-      set {
-        lock (queueLock) palette = (from color in value
-                                    select new FloatColor(color.ScA, color.ScR, color.ScG, color.ScB)).ToArray();
-      }
-    }
 
     public Color LiveColor {
       set {
@@ -140,6 +192,50 @@ namespace JuliaSet {
       if (iter.IsRunning) Start();
     }
 
+    public void SetPalette(Color[] value, bool isCyclic = true) {
+      if (value.Length < 2)
+        throw new InvalidOperationException("Palette must have at least two colors.");
+
+      lock (queueLock) {
+        palette = (from color in value
+                   select (FloatColor)color).ToArray();
+
+        c1 = new FloatColor[palette.Length];
+        c2 = new FloatColor[palette.Length];
+
+        if (isCyclic) {
+          int im, il;
+          FloatColor slope, a3;
+          for (int i = 1; i <= c1.Length; i++) {
+            im = i % c1.Length; il = i - 1;
+            a3 = palette[im] * 3;
+            slope = (palette[(i + 1) % palette.Length] - palette[il]) / 2;
+
+            c1[im] = a3 + slope;
+            c2[il] = a3 - slope;
+          }
+        }
+        else {
+          c1[0] = palette[0] * 2 + palette[1];
+          c2[c2.Length - 2] = palette[palette.Length - 2] + palette[palette.Length - 1] * 2;
+
+          c1[c1.Length - 1] = palette[palette.Length - 1] * 2 + palette[0];
+          c2[c2.Length - 1] = palette[palette.Length - 1] + palette[0] * 2;
+
+          int il;
+          FloatColor slope, a3;
+          for (int i = 1; i < palette.Length - 1; i++) {
+            il = i - 1;
+            a3 = palette[i] * 3;
+            slope = (palette[i + 1] - palette[il]) / 2;
+
+            c1[i] = a3 + slope;
+            c2[il] = a3 - slope;
+          }
+        }
+      }
+    }
+
     void NotifyPropertyChanged(string name) {
       if (propChanged != null) {
         propChanged(this, new PropertyChangedEventArgs(name));
@@ -185,20 +281,17 @@ namespace JuliaSet {
       if (floor == ceil) return palette[floor];
       else if (ceil - floor > 1) return fallback;
 
-      float pct = (float)(wrap - floor), invPct;
+      float t = (float)(wrap - floor);
 
-      pct = (3 - 2 * pct) * pct * pct;
+      FloatColor a = palette[floor],
+        b = c1[floor],
+        c = c2[floor],
+        d = palette[ceil],
+        a3 = 3 * a;
 
-      invPct = 1f - pct;
+      //return (t < 1f / 6 ? a : (t < .5f ? b / 3 : (t < 5f / 6 ? c / 3 : d))).Saturate();
 
-      FloatColor floorClr = palette[floor],
-        ceilClr = palette[ceil];
-
-      return new FloatColor(
-          floorClr.A * invPct + ceilClr.A * pct,
-          floorClr.R * invPct + ceilClr.R * pct,
-          floorClr.G * invPct + ceilClr.G * pct,
-          floorClr.B * invPct + ceilClr.B * pct);
+      return (a + t * (b - a3 + t * (a3 - 2 * b + c + t * (b - a - c + d)))).Saturate();
     }
 
     void Visualize() {

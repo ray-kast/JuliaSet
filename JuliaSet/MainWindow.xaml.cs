@@ -59,7 +59,7 @@ namespace JuliaSet {
       iter.Scale = 1;
 
 #if true
-      vis.Palette = new[] {
+      vis.SetPalette(new[] {
           Colors.LightSeaGreen,
           Colors.LightSkyBlue,
           Colors.DarkSlateBlue,
@@ -69,28 +69,28 @@ namespace JuliaSet {
           Colors.Gold,
           Colors.PaleGreen,
           Colors.ForestGreen,
-        };
+        });
 
       vis.LiveColor = Colors.Black;
       vis.PaletteType = VisPaletteType.Relative;
       vis.Scale = 1;
       vis.Offset = 0;
 #else
-#if false
-      vis.Palette = new[] {
+#if true
+      vis.SetPalette(new[] {
           Colors.Firebrick,
           Colors.Gold,
           //Colors.Linen,
           Colors.FloralWhite,
-        };
+        }, false);
 #else
-      vis.Palette = new[] {
+      vis.SetPalette(new[] {
         Colors.MidnightBlue,
         Colors.DarkSlateBlue,
         Colors.SlateBlue,
         Colors.Lavender,
         Colors.GhostWhite,
-      };
+      }, false);
 #endif
       vis.LiveColor = Colors.Black;
       vis.PaletteType = VisPaletteType.Relative;
@@ -103,7 +103,7 @@ namespace JuliaSet {
           MaxProgress.IsIndeterminate = true;
 
         Progress.Visibility = Visibility.Visible;
-        Palette.Visibility = Visibility.Hidden;
+        //Palette.Visibility = Visibility.Hidden;
 
         TaskbarInfo.ProgressState = TaskbarItemProgressState.Indeterminate;
       };
