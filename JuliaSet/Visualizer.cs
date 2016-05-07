@@ -121,8 +121,8 @@ namespace JuliaSet {
 
     readonly object queueLock = new object();
 
-    int width, height, stride;
-    long length, byteLen;
+    int bWidth, bHeight, iWidth, iHeight, spls;
+    long bLength, byteLen;
     double offs, scale;
     bool isDone;
     double[] result;
@@ -237,9 +237,7 @@ namespace JuliaSet {
     }
 
     void NotifyPropertyChanged(string name) {
-      if (propChanged != null) {
-        propChanged(this, new PropertyChangedEventArgs(name));
-      }
+      propChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
     void Start() {
@@ -252,14 +250,22 @@ namespace JuliaSet {
 
     void Iterated(Iterator sender, IteratedEventArgs e) {
       lock (queueLock) {
-        result = sender.Result.ToArray();
-        isAlive = sender.IsAlive.ToArray();
-        width = e.Width;
-        height = e.Height;
-        length = e.Length;
+        if (result != null && result.Length == sender.Result.Count)
+          sender.Result.CopyTo(result, 0);
+        else
+          result = sender.Result.ToArray();
+        if (isAlive != null && isAlive.Length == sender.IsAlive.Count)
+          sender.IsAlive.CopyTo(isAlive, 0);
+        else
+          isAlive = sender.IsAlive.ToArray();
+        bWidth = e.BufWidth;
+        bHeight = e.BufHeight;
+        iWidth = e.ImgWidth;
+        iHeight = e.ImgHeight;
+        spls = e.Samples;
+        bLength = e.BufLength;
         isDone = e.IsDone;
-        stride = width * bpp;
-        byteLen = length * bpp;
+        byteLen = bLength * bpp;
 
         startEvent.Set();
       }
@@ -295,11 +301,12 @@ namespace JuliaSet {
     }
 
     void Visualize() {
-      int width, height, stride;
-      long length, byteLen = 0, j;
-      double palOffs, palScale;
+      int bWidth, bHeight, iWidth, iHeight, spls, splCount, stride;
+      long bLength, iLength, byteLen = 0, i, j, spl;
+      float currSpl;
+      double palOffs, palScale, min, max, offs, scale;
       VisPaletteType palType;
-      bool isDone, doRepop;
+      bool isDone, doRepop, isPalRel;
       FloatColor liveClr, currClr;
 
       double[] result;
@@ -313,10 +320,15 @@ namespace JuliaSet {
         startEvent.WaitOne();
 
         lock (queueLock) {
-          width = this.width;
-          height = this.height;
-          length = this.length;
-          stride = this.stride;
+          bWidth = this.bWidth;
+          bHeight = this.bHeight;
+          iWidth = this.iWidth;
+          iHeight = this.iHeight;
+          spls = this.spls;
+          splCount = spls * spls;
+          bLength = this.bLength;
+          iLength = iWidth * iHeight;
+          stride = iWidth * bpp;
           result = this.result;
           isAlive = this.isAlive;
           isDone = this.isDone;
@@ -330,60 +342,89 @@ namespace JuliaSet {
           byteLen = this.byteLen;
         }
 
-        if (width == 0 || height == 0) continue;
+        if (bWidth == 0 || bHeight == 0) continue;
 
         if (doRepop)
           bytes = new byte[byteLen];
 
 
-        double min, max, offs = isDone ? palOffs : 0, scale;
-        bool isPalRel = palType == VisPaletteType.Relative || !isDone;
+        offs = isDone ? palOffs : 0;
+        isPalRel = palType == VisPaletteType.Relative || !isDone;
 
         if (isPalRel) {
-
           min = double.MaxValue;
           max = double.MinValue;
 
-          for (long i = 1; i < length; i++) {
+          for (i = 1; i < bLength; i++) {
             if (!isAlive[i]) {
               min = Math.Min(min, result[i]);
               max = Math.Max(max, result[i]);
             }
           }
 
+          Console.WriteLine($"[Visualizer] Current minimum: {min}; current maximum: {max}.");
+
           offs -= min;
-          scale = (isDone ? palScale * (palette.Length - 1) : 255) / (max - min);
+          scale = (isDone ? palScale * (palette.Length - 1) : 1) / (max - min);
         }
         else scale = (palType == VisPaletteType.CyclicSingle ? 1 : palette.Length) / palScale;
 
         if (isDone) {
-          for (long i = 0; i < length; i++) {
-            j = i * bpp;
+          for (int row = 0; row < iHeight; row++) {
+            for (int col = 0; col < iWidth; col++) {
+              i = (col + row * bWidth) * spls;
+              j = (col + row * iWidth) * bpp;
 
-            currClr = isAlive[i] ? liveClr : isPalRel ? GetColor(palette, liveClr, (result[i] + offs) * scale) : GetColor(palette, liveClr, Math.Log(result[i] + 1) * scale);
+              currClr = new FloatColor(0, 0, 0, 0);
 
-            bytes[j] = (byte)(currClr.B * 255);
-            bytes[j + 1] = (byte)(currClr.G * 255);
-            bytes[j + 2] = (byte)(currClr.R * 255);
-            bytes[j + 3] = (byte)(currClr.A * 255);
+              for (int sRow = 0; sRow < spls; sRow++) {
+                for (int sCol = 0; sCol < spls; sCol++) {
+                  spl = i + sCol + sRow * bWidth;
+
+                  currClr += isAlive[spl] ? liveClr : isPalRel ? GetColor(palette, liveClr, (result[spl] + offs) * scale) : GetColor(palette, liveClr, Math.Log(result[spl] + 1) * scale);
+                }
+              }
+
+              currClr /= splCount;
+
+              bytes[j] = (byte)(currClr.B * 255);
+              bytes[j + 1] = (byte)(currClr.G * 255);
+              bytes[j + 2] = (byte)(currClr.R * 255);
+              bytes[j + 3] = (byte)(currClr.A * 255);
+            }
           }
         }
         else {
-          for (long i = 0; i < length; i++) {
-            j = i * bpp;
+          for (int row = 0; row < iHeight; row++) {
+            for (int col = 0; col < iWidth; col++) {
+              i = (col + row * bWidth) * spls;
+              j = (col + row * iWidth) * bpp;
 
-            bytes[j] =
-              bytes[j + 1] =
-              bytes[j + 2] = (byte)(isAlive[i] ? 0 : (result[i] + offs) * scale);
-            bytes[j + 3] = (byte)255;
+              currSpl = 0;
+
+              for (int sRow = 0; sRow < spls; sRow++) {
+                for (int sCol = 0; sCol < spls; sCol++) {
+                  spl = i + sCol + sRow * bWidth;
+
+                  currSpl += isAlive[spl] ? 0 : (float)((result[spl] + offs) * scale);
+                }
+              }
+
+              currSpl /= splCount;
+
+              bytes[j] =
+                bytes[j + 1] =
+                bytes[j + 2] = (byte)(Math.Max(0, Math.Min(1, currSpl)) * 255);
+              bytes[j + 3] = (byte)255;
+            }
           }
         }
 
-        src = BitmapSource.Create(width, height, dpiX, dpiY, PixelFormats.Bgra32, null, bytes, stride);
+        src = BitmapSource.Create(iWidth, iHeight, dpiX, dpiY, PixelFormats.Bgra32, null, bytes, stride);
 
         Source = src.GetAsFrozen() as BitmapSource;
 
-        if (visualized != null) visualized(this);
+        visualized?.Invoke(this);
       }
     }
 

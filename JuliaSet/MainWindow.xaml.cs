@@ -27,12 +27,15 @@ namespace JuliaSet {
     }
 
     DerivableIterFunc fn = new MandelbrotIterFunc();
-    LiveDEMIterator iter;
+    Iterator iter;
     Visualizer vis;
     Binding iterWidthBinding, iterHeightBinding, visSourceBinding;
 
     private void Window_Loaded(object sender, RoutedEventArgs e) {
-      iter = new LiveDEMIterator(fn, 2000, 1e5);
+      iter = new LiveDEMIterator(fn, 2000, 1e5) {
+        Samples = 1
+      };
+
       vis = new Visualizer(iter);
 
       iterWidthBinding = new Binding("ActualWidth") {
@@ -76,7 +79,7 @@ namespace JuliaSet {
       vis.Scale = 1;
       vis.Offset = 0;
 #else
-#if true
+#if false
       vis.SetPalette(new[] {
           Colors.Firebrick,
           Colors.Gold,
@@ -98,7 +101,7 @@ namespace JuliaSet {
       vis.Offset = 0;
 #endif
 
-      iter.Resized += delegate (int width, int height, long length) {
+      iter.Resized += delegate (int bWidth, int bHeight, int iWidth, int iHeight, int spls, long bLength) {
         MinProgress.IsIndeterminate =
           MaxProgress.IsIndeterminate = true;
 
@@ -153,8 +156,8 @@ namespace JuliaSet {
 
       Point mousePos = Mouse.GetPosition(Img);
 
-      iter.CenterX += (mousePos.X - iter.Width / 2) * deltaScl;
-      iter.CenterY += (mousePos.Y - iter.Height / 2) * deltaScl;
+      iter.CenterX += (mousePos.X - iter.ImgWidth / 2) * deltaScl;
+      iter.CenterY += (mousePos.Y - iter.ImgHeight / 2) * deltaScl;
 
       iter.Scale = newScale;
     }

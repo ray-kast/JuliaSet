@@ -33,17 +33,17 @@ namespace JuliaSet {
   }
 
   //f(z) = z^2 + c
-  class ZQuadIterFunc : IterFuncC {
+  class ZQuadIterFunc : DerivableIterFuncC {
     public ZQuadIterFunc(Complex c) : base(c) { }
 
     public ZQuadIterFunc() : this(new Complex(-.8, .156)) { }
 
     public static ZQuadIterFunc Preset1() {
-      return new ZQuadIterFunc(new Complex(1 - IterFunc.GoldenRatio, 0));
+      return new ZQuadIterFunc(new Complex(1 - GoldenRatio, 0));
     }
 
     public static ZQuadIterFunc Preset2() {
-      return new ZQuadIterFunc(new Complex(IterFunc.GoldenRatio - 2, IterFunc.GoldenRatio - 1));
+      return new ZQuadIterFunc(new Complex(GoldenRatio - 2, GoldenRatio - 1));
     }
 
     public static ZQuadIterFunc Preset3() {
@@ -68,6 +68,10 @@ namespace JuliaSet {
 
     public override Complex Invoke(Complex z, Complex z0) {
       return z * z + c;
+    }
+
+    public override Complex Delta(Complex z, Complex dz) {
+      return 2 * z * dz;
     }
   }
 

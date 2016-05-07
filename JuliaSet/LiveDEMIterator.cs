@@ -33,7 +33,7 @@ namespace JuliaSet {
     }
 
     protected override void DoIterations() {
-      int width = 0, height = 0;
+      int bWidth = 0, bHeight = 0, iWidth = 0, iHeight = 0, spls = 0;
       long i = 0, length = 0, numDead = 0;
       double scalePx, offsX, offsY, mag;
       bool areAnyAlive, didAnyDie;
@@ -45,9 +45,12 @@ namespace JuliaSet {
         do {
           if (doRepop) {
             lock (sizeLock) {
-              width = this.width;
-              height = this.height;
-              length = this.length;
+              bWidth = this.bWidth;
+              bHeight = this.bHeight;
+              iWidth = this.iWidth;
+              iHeight = this.iHeight;
+              spls = this.spls;
+              length = this.bLength;
               scalePx = this.scalePx;
               offsX = this.offsX;
               offsY = this.offsY;
@@ -64,15 +67,14 @@ namespace JuliaSet {
               numDead = 0;
 
               long j;
-              for (int row = 0; row < height; row++) {
-                for (int col = 0; col < width; col++) {
-                  j = row * width + col;
+              for (int row = 0; row < bHeight; row++) {
+                for (int col = 0; col < bWidth; col++) {
+                  j = row * bWidth + col;
 
                   mag = Complex.Abs(
-                    points[j] = origPoints[j] = new Complex((col + offsX) * scalePx, (row + offsY) * scalePx));
+                    points[j] = origPoints[j] = new Complex((col + offsX) * scaleSpl, (row + offsY) * scaleSpl));
 
                   deltas[j] = 1;
-
 
                   isAlive[j] = mag < thresh;
 
@@ -90,7 +92,20 @@ namespace JuliaSet {
 
               double pixelProg = (double)numDead / length;
 
-              if (iterated != null) iterated(this, new IteratedEventArgs(width, height, length, 0, pixelProg, pixelProg, 0, areAnyAlive, didAnyDie, !areAnyAlive));
+              iterated?.Invoke(this, new IteratedEventArgs(
+                bWidth,
+                bHeight,
+                iWidth,
+                iHeight,
+                spls,
+                length,
+                0,
+                pixelProg,
+                pixelProg,
+                0,
+                areAnyAlive,
+                didAnyDie,
+                !areAnyAlive));
             }
           }
           else {
@@ -110,6 +125,7 @@ namespace JuliaSet {
                 }
                 else {
                   isAlive[j] = false;
+                  //result[j] = mag * Math.Log(mag) / Complex.Abs(deltas[j]);
                   result[j] = Math.Exp(-Math.Pow(mag * Math.Log(mag) / Complex.Abs(deltas[j]), .45));
                   didAnyDie = true;
                   numDead++;
@@ -120,7 +136,20 @@ namespace JuliaSet {
             double pixelProg = (double)numDead / length,
               iterProg = (double)i / iters;
 
-            if (iterated != null) iterated(this, new IteratedEventArgs(width, height, length, i, Math.Max(pixelProg, iterProg), pixelProg, iterProg, areAnyAlive, didAnyDie, (i >= iters - 1) || !areAnyAlive));
+            iterated?.Invoke(this, new IteratedEventArgs(
+              bWidth,
+              bHeight,
+              iWidth,
+              iHeight,
+              spls,
+              length,
+              i,
+              Math.Max(pixelProg, iterProg),
+              pixelProg,
+              iterProg,
+              areAnyAlive,
+              didAnyDie,
+              (i >= iters - 1) || !areAnyAlive));
 
             i++;
           }

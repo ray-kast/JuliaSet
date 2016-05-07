@@ -10,14 +10,17 @@ using System.Windows;
 
 namespace JuliaSet {
   class IteratedEventArgs : EventArgs {
-    int width, height;
-    long length, curr;
+    int bWidth, bHeight, iWidth, iHeight, spls;
+    long bLength, curr;
     double progress, pixelProg, iterProg;
     bool areAnyAlive, didAnyDie, isDone;
 
-    public int Width { get { return width; } }
-    public int Height { get { return height; } }
-    public long Length { get { return length; } }
+    public int BufWidth { get { return bWidth; } }
+    public int BufHeight { get { return bHeight; } }
+    public int ImgWidth { get { return iWidth; } }
+    public int ImgHeight { get { return iHeight; } }
+    public int Samples { get { return spls; } }
+    public long BufLength { get { return bLength; } }
     public long Current { get { return curr; } }
     public double Progress { get { return progress; } }
     public double PixelProgress { get { return pixelProg; } }
@@ -26,10 +29,13 @@ namespace JuliaSet {
     public bool DidAnyDie { get { return didAnyDie; } }
     public bool IsDone { get { return isDone; } }
 
-    public IteratedEventArgs(int width, int height, long length, long curr, double progress, double pixelProg, double iterProg, bool areAnyAlive, bool didAnyDie, bool isDone) {
-      this.width = width;
-      this.height = height;
-      this.length = length;
+    public IteratedEventArgs(int bWidth, int bHeight, int iWidth, int iHeight, int spls, long bLength, long curr, double progress, double pixelProg, double iterProg, bool areAnyAlive, bool didAnyDie, bool isDone) {
+      this.bWidth = bWidth;
+      this.bHeight = bHeight;
+      this.iWidth = iWidth;
+      this.iHeight = iHeight;
+      this.spls = spls;
+      this.bLength = bLength;
       this.curr = curr;
       this.progress = progress;
       this.pixelProg = pixelProg;
@@ -40,7 +46,7 @@ namespace JuliaSet {
     }
   }
 
-  delegate void IterResizedEvent(int width, int height, long length);
+  delegate void IterResizedEvent(int bWidth, int bHeight, int iWidth, int iHeight, int spls, long bLength);
 
   delegate void IterIteratedEvent(Iterator sender, IteratedEventArgs e);
 
@@ -49,9 +55,9 @@ namespace JuliaSet {
   delegate void IterCompletedEvent(Iterator iter);
 
   abstract class Iterator : DependencyObject {
-    protected double thresh = 10, scale = 1, scalePx, ctrX = 0, ctrY = 0, offsX, offsY;
-    protected int width = 1, height = 1;
-    protected long length, iters = 1;
+    protected double thresh = 10, scale = 1, scaleSpl, scalePx, ctrX = 0, ctrY = 0, offsX, offsY;
+    protected int bWidth = 1, bHeight = 1, iWidth = 1, iHeight = 1, spls = 1;
+    protected long bLength, iters = 1;
     protected bool doRepop;
     protected double[] result;
     protected bool[] isAlive;
@@ -73,23 +79,40 @@ namespace JuliaSet {
       set { iters = value; }
     }
 
-    public int Width {
+    public int BufWidth {
+      get { return bWidth; }
+    }
+
+    public int BufHeight {
+      get { return bHeight; }
+    }
+
+    public int ImgWidth {
       get { return (int)GetValue(WidthProperty); }
       set { SetValue(WidthProperty, value); }
     }
 
-    public int Height {
+    public int ImgHeight {
       get { return (int)GetValue(HeightProperty); }
       set { SetValue(HeightProperty, value); }
     }
 
-    public long Length {
-      get { return length; }
+    public int Samples {
+      get { return spls; }
+      set { spls = Math.Max(1, value); Resize(); }
+    }
+
+    public long BufLength {
+      get { return bLength; }
     }
 
     public double Scale {
       get { return scale; }
       set { scale = value; Resize(); }
+    }
+
+    public double ScaleSpl {
+      get { return scaleSpl; }
     }
 
     public double ScalePx {
@@ -143,8 +166,8 @@ namespace JuliaSet {
     }
 
     public Iterator(long iters, double thresh) {
-      this.Iterations = iters;
-      this.Thresh = thresh;
+      Iterations = iters;
+      Thresh = thresh;
 
       Resize();
     }
@@ -152,10 +175,10 @@ namespace JuliaSet {
     protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e) {
       base.OnPropertyChanged(e);
 
-      if (e.Property.PropertyType == typeof(int)) {
-        if ((int)e.NewValue != (int)e.OldValue) {
-          Resize();
-        }
+      if ((e.Property == WidthProperty
+        || e.Property == HeightProperty)
+        && (int)e.NewValue != (int)e.OldValue) {
+        Resize();
       }
     }
 
@@ -163,29 +186,36 @@ namespace JuliaSet {
       if (started != null) started(this);
     }
 
-    public double GetScalePx(double scale) {
-      if (width < height)
-        return scale * 2 / width;
+    public double GetScaleSpl(double scale) {
+      if (bWidth < bHeight)
+        return scale * 2 / bWidth;
       else
-        return scale * 2 / height;
+        return scale * 2 / bHeight;
+    }
+
+    public double GetScalePx(double scale) {
+      if (iWidth < iHeight)
+        return scale * 2 / iWidth;
+      else
+        return scale * 2 / iHeight;
     }
 
     protected virtual void Resize() {
-      width = Width;
-      height = Height;
-      length = width * height;
+      iWidth = ImgWidth;
+      iHeight = ImgHeight;
+      bWidth = iWidth * spls;
+      bHeight = iHeight * spls;
+      bLength = bWidth * bHeight;
 
-      if (width < height)
-        scalePx = scale * 2 / width;
-      else
-        scalePx = scale * 2 / height;
+      scaleSpl = GetScaleSpl(scale);
+      scalePx = scaleSpl * spls;
 
-      offsX = (ctrX / scalePx) - (width / 2);
-      offsY = (ctrY / scalePx) - (height / 2);
+      offsX = (ctrX / scaleSpl) - (bWidth / 2);
+      offsY = (ctrY / scaleSpl) - (bHeight / 2);
 
       doRepop = true;
 
-      if (resized != null) resized(width, height, length);
+      resized?.Invoke(bWidth, bHeight, iWidth, iHeight, spls, bLength);
     }
 
     public static readonly DependencyProperty WidthProperty =
@@ -287,7 +317,7 @@ namespace JuliaSet {
         iterThreads[i].Start(i);
       }
 
-      foreach(ManualResetEvent evt in syncEvents)
+      foreach (ManualResetEvent evt in syncEvents)
         evt.Set();
 
       base.Start();
