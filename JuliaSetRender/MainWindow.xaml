@@ -5,9 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:JuliaSetRender"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525"
+        Title="MainWindow"
+        Width="525"
+        Height="350"
         Loaded="Window_Loaded">
-    <Grid>
-      <Image Name="OutputImg" />
-    </Grid>
+  <Grid>
+    <Image Name="OutputImg"
+           Stretch="Uniform"
+           RenderOptions.BitmapScalingMode="NearestNeighbor" />
+  </Grid>
 </Window>

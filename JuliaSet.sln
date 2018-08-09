@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuliaSet", "JuliaSet\JuliaSet.csproj", "{A9A8EFF2-5973-4C8E-8CFB-EF8DF0DB0C06}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuliaSetRender", "JuliaSetRender\JuliaSetRender.csproj", "{B88ECB75-94B0-45C6-B1C1-837EBA95EF4C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuliaSetCore", "JuliaSetCore\JuliaSetCore.csproj", "{8ABEF2DA-6ADC-4CD9-BC23-C26FB62987F2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +33,14 @@ Global
 		{B88ECB75-94B0-45C6-B1C1-837EBA95EF4C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B88ECB75-94B0-45C6-B1C1-837EBA95EF4C}.Release|x64.ActiveCfg = Release|Any CPU
 		{B88ECB75-94B0-45C6-B1C1-837EBA95EF4C}.Release|x64.Build.0 = Release|Any CPU
+		{8ABEF2DA-6ADC-4CD9-BC23-C26FB62987F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8ABEF2DA-6ADC-4CD9-BC23-C26FB62987F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8ABEF2DA-6ADC-4CD9-BC23-C26FB62987F2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8ABEF2DA-6ADC-4CD9-BC23-C26FB62987F2}.Debug|x64.Build.0 = Debug|Any CPU
+		{8ABEF2DA-6ADC-4CD9-BC23-C26FB62987F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8ABEF2DA-6ADC-4CD9-BC23-C26FB62987F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8ABEF2DA-6ADC-4CD9-BC23-C26FB62987F2}.Release|x64.ActiveCfg = Release|Any CPU
+		{8ABEF2DA-6ADC-4CD9-BC23-C26FB62987F2}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

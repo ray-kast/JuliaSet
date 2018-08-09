@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JuliaSetRender;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -25,14 +26,17 @@ namespace JuliaSet {
     public MainWindow() {
       InitializeComponent();
     }
-
-    DerivableIterFunc fn = new MandelbrotIterFunc();
     Iterator iter;
     Visualizer vis;
     Binding iterWidthBinding, iterHeightBinding, visSourceBinding;
+    CompositionTarget target;
 
     private void Window_Loaded(object sender, RoutedEventArgs e) {
-      iter = new LiveDEMIterator(fn, 2000, 1e5) {
+      target = PresentationSource.FromVisual(this).CompositionTarget;
+
+      var fn = new MandelbrotIterFunc();
+
+      iter = new LiveDEMIterator(fn, 2000, 1e10, IterSeedMode.Coordinate, this) {
         Samples = 1
       };
 
@@ -61,7 +65,7 @@ namespace JuliaSet {
       iter.CenterY = 0;
       iter.Scale = 1;
 
-#if true
+#if false
       vis.SetPalette(new[] {
           Colors.LightSeaGreen,
           Colors.LightSkyBlue,
@@ -79,19 +83,21 @@ namespace JuliaSet {
       vis.Scale = 1;
       vis.Offset = 0;
 #else
-#if false
+#if true
       vis.SetPalette(new[] {
-          Colors.Firebrick,
-          Colors.Gold,
-          //Colors.Linen,
-          Colors.FloralWhite,
-        }, false);
+        Colors.Black,
+        Colors.Firebrick,
+        Colors.Gold,
+        //Colors.Linen,
+        //Colors.FloralWhite,
+        Colors.White,
+      }, false);
 #else
       vis.SetPalette(new[] {
-        Colors.MidnightBlue,
+        //Colors.MidnightBlue,
         Colors.DarkSlateBlue,
         Colors.SlateBlue,
-        Colors.Lavender,
+        //Colors.Lavender,
         Colors.GhostWhite,
       }, false);
 #endif
@@ -114,7 +120,7 @@ namespace JuliaSet {
       iter.Iterated += async delegate (Iterator sender2, IteratedEventArgs e2) {
         try {
           await Dispatcher.BeginInvoke(new Action(delegate () {
-            this.Title = String.Format("{1}Iteration {0} ({2:000.00}%); Center ({3:E6}, {4:E6}); Zoom {5}",
+            Title = string.Format("{1}Iteration {0} ({2:000.00}%); Center ({3:E6}, {4:E6}); Zoom {5}",
               e2.Current + 1,
               e2.IsDone ? "[Done] " : "",
               Math.Floor(e2.Progress * 10000) / 100,
@@ -156,15 +162,15 @@ namespace JuliaSet {
 
       Point mousePos = Mouse.GetPosition(Img);
 
-      iter.CenterX += (mousePos.X - iter.ImgWidth / 2) * deltaScl;
-      iter.CenterY += (mousePos.Y - iter.ImgHeight / 2) * deltaScl;
+      iter.CenterX += (mousePos.X - iter.ImgWidth / 2) * deltaScl * target.TransformToDevice.M11;
+      iter.CenterY += (mousePos.Y - iter.ImgHeight / 2) * deltaScl * target.TransformToDevice.M22;
 
       iter.Scale = newScale;
     }
 
     private void Thumb_DragDelta(object sender, DragDeltaEventArgs e) {
-      iter.CenterX -= e.HorizontalChange * iter.ScalePx;
-      iter.CenterY -= e.VerticalChange * iter.ScalePx;
+      iter.CenterX -= e.HorizontalChange * iter.ScalePx * target.TransformToDevice.M11;
+      iter.CenterY -= e.VerticalChange * iter.ScalePx * target.TransformToDevice.M22;
 
       Canvas.SetLeft(Thumb, Canvas.GetLeft(Thumb) + e.HorizontalChange);
       Canvas.SetTop(Thumb, Canvas.GetTop(Thumb) + e.VerticalChange);

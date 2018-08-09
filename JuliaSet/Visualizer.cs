@@ -27,22 +27,18 @@ namespace JuliaSet {
 
     public float B {
       get { return comps[0]; }
-      set { comps[0] = value; }
     }
 
     public float G {
       get { return comps[1]; }
-      set { comps[1] = value; }
     }
 
     public float R {
       get { return comps[2]; }
-      set { comps[2] = value; }
     }
 
     public float A {
       get { return comps[3]; }
-      set { comps[3] = value; }
     }
 
     public FloatColor(float a, float r, float g, float b) {
@@ -51,17 +47,17 @@ namespace JuliaSet {
 
     public FloatColor Saturate() {
       return new FloatColor(
-        Math.Max(0, Math.Min(1, this.A)),
-        Math.Max(0, Math.Min(1, this.R)),
-        Math.Max(0, Math.Min(1, this.G)),
-        Math.Max(0, Math.Min(1, this.B)));
+        Math.Max(0, Math.Min(1, A)),
+        Math.Max(0, Math.Min(1, R)),
+        Math.Max(0, Math.Min(1, G)),
+        Math.Max(0, Math.Min(1, B)));
     }
 
     public static FloatColor operator +(FloatColor a, FloatColor b) {
       return new FloatColor(a.A + b.A, a.R + b.R, a.G + b.G, a.B + b.B);
     }
 
-    public static FloatColor operator - (FloatColor a, FloatColor b) {
+    public static FloatColor operator -(FloatColor a, FloatColor b) {
       return new FloatColor(a.A - b.A, a.R - b.R, a.G - b.G, a.B - b.B);
     }
 
@@ -95,11 +91,11 @@ namespace JuliaSet {
       return new FloatColor(color.ScA, color.ScR, color.ScG, color.ScB);
     }
 
-    public static implicit operator float[](FloatColor color) {
+    public static implicit operator float[] (FloatColor color) {
       return color.Comps;
     }
 
-    public static implicit operator byte[](FloatColor color) {
+    public static implicit operator byte[] (FloatColor color) {
       return (from comp in color.Saturate().Comps
               select (byte)(comp * 255)).ToArray();
     }
@@ -362,7 +358,7 @@ namespace JuliaSet {
             }
           }
 
-          Console.WriteLine($"[Visualizer] Current minimum: {min}; current maximum: {max}.");
+          //Console.WriteLine($"[Visualizer] Current minimum: {min}; current maximum: {max}.");
 
           offs -= min;
           scale = (isDone ? palScale * (palette.Length - 1) : 1) / (max - min);
@@ -381,7 +377,7 @@ namespace JuliaSet {
                 for (int sCol = 0; sCol < spls; sCol++) {
                   spl = i + sCol + sRow * bWidth;
 
-                  currClr += isAlive[spl] ? liveClr : isPalRel ? GetColor(palette, liveClr, (result[spl] + offs) * scale) : GetColor(palette, liveClr, Math.Log(result[spl] + 1) * scale);
+                  currClr += isAlive[spl] ? liveClr : (isPalRel ? GetColor(palette, liveClr, (result[spl] + offs) * scale) : GetColor(palette, liveClr, Math.Log(result[spl] + 1) * scale));
                 }
               }
 
@@ -434,8 +430,8 @@ namespace JuliaSet {
 
       byte[] bytes = new byte[length * bpp];
 
-      for(int row = 0; row < height; row++) {
-        for(int col = 0; col < width; col++) {
+      for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
           currByte = (row * width + col) * bpp;
           currClr = GetColor(palette, liveClr, (double)col * (palette.Length - 1) / width);
 
@@ -445,7 +441,7 @@ namespace JuliaSet {
           bytes[currByte + 3] = (byte)(currClr.A * 255);
         }
       }
-      
+
       return BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32, null, bytes, width * bpp);
     }
   }

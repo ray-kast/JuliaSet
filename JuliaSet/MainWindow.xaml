@@ -60,7 +60,10 @@
       <Image Name="Img"
              Stretch="Uniform"
              HorizontalAlignment="Center"
-             VerticalAlignment="Center" />
+             VerticalAlignment="Center"
+             SnapsToDevicePixels="True"
+             UseLayoutRounding="True"
+             RenderOptions.BitmapScalingMode="NearestNeighbor" />
       <Canvas Name="ThumbCanvas">
         <Thumb Name="Thumb"
                Opacity="0"

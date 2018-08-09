@@ -6,17 +6,17 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace JuliaSetRender {
-  abstract class IterFunc {
+  public abstract class IterFunc {
     protected static readonly double GoldenRatio = (1 + Math.Sqrt(5)) / 2;
 
     public abstract Complex Invoke(Complex z, Complex z0);
   }
 
-  abstract class DerivableIterFunc : IterFunc {
+  public abstract class DerivableIterFunc : IterFunc {
     public abstract Complex Delta(Complex z, Complex dz);
   }
 
-  abstract class IterFuncC : IterFunc {
+  public abstract class IterFuncC : IterFunc {
     protected readonly Complex c;
 
     public IterFuncC(Complex c) {
@@ -24,7 +24,7 @@ namespace JuliaSetRender {
     }
   }
 
-  abstract class DerivableIterFuncC : DerivableIterFunc {
+  public abstract class DerivableIterFuncC : DerivableIterFunc {
     protected readonly Complex c;
 
     public DerivableIterFuncC(Complex c) {
@@ -33,7 +33,7 @@ namespace JuliaSetRender {
   }
 
   //f(z) = z^2 + c
-  class ZQuadIterFunc : DerivableIterFuncC {
+  public class ZQuadIterFunc : DerivableIterFuncC {
     public ZQuadIterFunc(Complex c) : base(c) { }
 
     public ZQuadIterFunc() : this(new Complex(-.8, .156)) { }
@@ -76,7 +76,7 @@ namespace JuliaSetRender {
   }
 
   //f(z) = z^n + c
-  class ZPowIterFunc : IterFuncC {
+  public class ZPowIterFunc : DerivableIterFuncC {
     protected readonly double pow;
 
     public ZPowIterFunc(Complex c, double pow)
@@ -89,10 +89,14 @@ namespace JuliaSetRender {
     public override Complex Invoke(Complex z, Complex z0) {
       return Complex.Pow(z, pow) + c;
     }
+
+    public override Complex Delta(Complex z, Complex dz) {
+      return pow * Complex.Pow(z, pow - 1) * dz;
+    }
   }
 
   //f(z) = exp z^3 + c
-  class ExpZCubIterFunc : IterFuncC {
+  public class ExpZCubIterFunc : DerivableIterFuncC {
     public ExpZCubIterFunc(Complex c) : base(c) { }
 
     public ExpZCubIterFunc() : this(new Complex(-.621, 0)) { }
@@ -100,10 +104,14 @@ namespace JuliaSetRender {
     public override Complex Invoke(Complex z, Complex z0) {
       return Complex.Exp(Complex.Pow(z, 3)) + c;
     }
+
+    public override Complex Delta(Complex z, Complex dz) {
+      return 3 * Complex.Exp(Complex.Pow(z, 3)) * Complex.Pow(z, 2) * dz;
+    }
   }
 
   //f(z) = z exp z + c
-  class ZExpZIterFunc : IterFuncC {
+  public class ZExpZIterFunc : IterFuncC {
     public ZExpZIterFunc(Complex c) : base(c) { }
 
     public ZExpZIterFunc() : this(new Complex(.04, 0)) { }
@@ -114,7 +122,7 @@ namespace JuliaSetRender {
   }
 
   //f(z) = z^2 exp z + c
-  class ZQuadExpZIterFunc : IterFunc {
+  public class ZQuadExpZIterFunc : IterFunc {
     readonly Complex c;
 
     public ZQuadExpZIterFunc(Complex c) {
@@ -129,7 +137,7 @@ namespace JuliaSetRender {
   }
 
   //f(z) = sqrt(sin(z^2)) + c
-  class SqrtSinhZQuadIterFunc : IterFunc {
+  public class SqrtSinhZQuadIterFunc : IterFunc {
     readonly Complex c;
 
     public SqrtSinhZQuadIterFunc(Complex c) {
@@ -144,7 +152,7 @@ namespace JuliaSetRender {
   }
 
   //f(z) = (z^2 + z) / ln z + c
-  class ZQuadPlusZDivLnZIterFunc : IterFunc {
+  public class ZQuadPlusZDivLnZIterFunc : IterFunc {
     readonly Complex c;
 
     public ZQuadPlusZDivLnZIterFunc(Complex c) {
@@ -159,7 +167,7 @@ namespace JuliaSetRender {
   }
 
   //f(z) = z^2 + z0
-  class MandelbrotIterFunc : DerivableIterFunc {
+  public class MandelbrotIterFunc : DerivableIterFunc {
     public override Complex Invoke(Complex z, Complex z0) {
       return z * z + z0;
     }
@@ -169,7 +177,25 @@ namespace JuliaSetRender {
     }
   }
 
-  class PolyFracIterFunc1 : IterFunc {
+  public class BurningShipIterFunc : DerivableIterFunc {
+    Complex AbsComps(Complex z) => new Complex(Math.Abs(z.Real), Math.Abs(z.Imaginary));
+
+    Complex DeltaAbsComps(Complex z, Complex dz) => new Complex(z.Real < 0 ? -dz.Real : dz.Real, z.Imaginary < 0 ? -dz.Imaginary : dz.Imaginary);
+
+    //Complex DeltaAbsComps(Complex z, Complex dz) {
+    //  return AbsComps(z) - AbsComps(z - dz);
+    //}
+
+    public override Complex Invoke(Complex z, Complex z0) {
+      return Complex.Pow(AbsComps(z), 2) + z0;
+    }
+
+    public override Complex Delta(Complex z, Complex dz) {
+      return 2 * AbsComps(z) * DeltaAbsComps(z, dz) + 1;
+    }
+  }
+
+  public class PolyFracIterFunc1 : DerivableIterFunc {
     readonly Complex c;
 
     public PolyFracIterFunc1(Complex c) {
@@ -181,9 +207,13 @@ namespace JuliaSetRender {
     public override Complex Invoke(Complex z, Complex z0) {
       return (1 - Complex.Pow(z, 3) / 6) / Complex.Pow(z - z * z / 2, 2) + c;
     }
+
+    public override Complex Delta(Complex z, Complex dz) {
+      return (-z * z * dz / 2 * Complex.Pow(z - (z * z) / 2, 2) + 2 * (1 - Complex.Pow(z, 3) / 6) * dz * (1 - z)) / Complex.Pow(z - z * z / 2, 4);
+    }
   }
 
-  class ExpZPlusZ0IterFunc : IterFunc {
+  public class ExpZPlusZ0IterFunc : IterFunc {
     public override Complex Invoke(Complex z, Complex z0) {
       return Complex.Pow(z, 2) * Complex.Exp(z) + z0;
     }

@@ -1,21 +1,25 @@
-﻿using System;
+﻿using JuliaSetRender;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
-namespace JuliaSet {
-  class LiveDEMIterator : SingleThreadedIterator<DerivableIterFunc> {
+namespace JuliaSet
+{
+  class LiveDEMIterator : SingleThreadedIterator<DerivableIterFunc>
+  {
     AutoResetEvent startEvent = new AutoResetEvent(false);
 
     Complex[] points, origPoints, deltas;
 
     readonly object sizeLock = new object();
 
-    public LiveDEMIterator(DerivableIterFunc func, long iters, double thresh)
-      : base(func, iters, thresh) {
+    public LiveDEMIterator(DerivableIterFunc func, long iters, double thresh, IterSeedMode seedMode, Visual sourceVis)
+      : base(func, iters, thresh, seedMode, sourceVis) {
     }
 
     public override void Start() {
@@ -50,7 +54,7 @@ namespace JuliaSet {
               iWidth = this.iWidth;
               iHeight = this.iHeight;
               spls = this.spls;
-              length = this.bLength;
+              length = bLength;
               scalePx = this.scalePx;
               offsX = this.offsX;
               offsY = this.offsY;
@@ -71,10 +75,23 @@ namespace JuliaSet {
                 for (int col = 0; col < bWidth; col++) {
                   j = row * bWidth + col;
 
-                  mag = Complex.Abs(
-                    points[j] = origPoints[j] = new Complex((col + offsX) * scaleSpl, (row + offsY) * scaleSpl));
+                  origPoints[j] = new Complex((col + offsX) * scaleSpl, (row + offsY) * scaleSpl);
 
-                  deltas[j] = 1;
+                  switch (seedMode) {
+                    case IterSeedMode.Zero:
+                      points[j] = 0;
+                      break;
+                    case IterSeedMode.Coordinate:
+                      points[j] = origPoints[j];
+                      break;
+                  }
+
+                  mag = points[j].Magnitude;
+
+                  switch (seedMode) {
+                    case IterSeedMode.Coordinate: deltas[j] = 1; break;
+                    case IterSeedMode.Zero: deltas[j] = 0; break;
+                  }
 
                   isAlive[j] = mag < thresh;
 
@@ -126,7 +143,7 @@ namespace JuliaSet {
                 else {
                   isAlive[j] = false;
                   //result[j] = mag * Math.Log(mag) / Complex.Abs(deltas[j]);
-                  result[j] = Math.Exp(-Math.Pow(mag * Math.Log(mag) / Complex.Abs(deltas[j]), .45));
+                  result[j] = Math.Exp(-Math.Pow(mag * Math.Log(mag) / Complex.Abs(deltas[j]), .5));
                   didAnyDie = true;
                   numDead++;
                 }

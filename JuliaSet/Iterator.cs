@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JuliaSetRender;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -7,8 +8,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 
 namespace JuliaSet {
+  enum IterSeedMode {
+    Zero,
+    Coordinate,
+  }
+
   class IteratedEventArgs : EventArgs {
     int bWidth, bHeight, iWidth, iHeight, spls;
     long bLength, curr;
@@ -62,12 +69,18 @@ namespace JuliaSet {
     protected double[] result;
     protected bool[] isAlive;
 
+    protected IterSeedMode seedMode;
+
     protected IterResizedEvent resized;
     protected IterIteratedEvent iterated;
     protected IterStartedEvent started;
     protected IterCompletedEvent completed;
 
+    CompositionTarget compTarget;
+
     public abstract bool IsRunning { get; }
+
+    Matrix TransformToDevice => compTarget.TransformToDevice;
 
     public double Thresh {
       get { return thresh; }
@@ -87,13 +100,13 @@ namespace JuliaSet {
       get { return bHeight; }
     }
 
-    public int ImgWidth {
-      get { return (int)GetValue(WidthProperty); }
+    public double ImgWidth {
+      get { return (double)GetValue(WidthProperty); }
       set { SetValue(WidthProperty, value); }
     }
 
-    public int ImgHeight {
-      get { return (int)GetValue(HeightProperty); }
+    public double ImgHeight {
+      get { return (double)GetValue(HeightProperty); }
       set { SetValue(HeightProperty, value); }
     }
 
@@ -165,9 +178,11 @@ namespace JuliaSet {
       remove { completed -= value; }
     }
 
-    public Iterator(long iters, double thresh) {
+    public Iterator(long iters, double thresh, IterSeedMode seedMode, Visual sourceVis) {
       Iterations = iters;
       Thresh = thresh;
+      this.seedMode = seedMode;
+      compTarget = PresentationSource.FromVisual(sourceVis).CompositionTarget;
 
       Resize();
     }
@@ -177,13 +192,13 @@ namespace JuliaSet {
 
       if ((e.Property == WidthProperty
         || e.Property == HeightProperty)
-        && (int)e.NewValue != (int)e.OldValue) {
+        && (double)e.NewValue != (double)e.OldValue) {
         Resize();
       }
     }
 
     public virtual void Start() {
-      if (started != null) started(this);
+      started?.Invoke(this);
     }
 
     public double GetScaleSpl(double scale) {
@@ -201,8 +216,10 @@ namespace JuliaSet {
     }
 
     protected virtual void Resize() {
-      iWidth = ImgWidth;
-      iHeight = ImgHeight;
+      Console.WriteLine($"Image size: {ImgWidth} x {ImgHeight} ({ImgWidth * TransformToDevice.M11} x {ImgHeight * TransformToDevice.M22} device)");
+      Console.WriteLine($"DPPX: {TransformToDevice.M11} x {TransformToDevice.M22}");
+      iWidth = (int)Math.Round(ImgWidth * TransformToDevice.M11);
+      iHeight = (int)Math.Round(ImgHeight * TransformToDevice.M22);
       bWidth = iWidth * spls;
       bHeight = iHeight * spls;
       bLength = bWidth * bHeight;
@@ -219,10 +236,10 @@ namespace JuliaSet {
     }
 
     public static readonly DependencyProperty WidthProperty =
-        DependencyProperty.Register("Width", typeof(int), typeof(Iterator), new PropertyMetadata(0));
+        DependencyProperty.Register("Width", typeof(double), typeof(Iterator), new PropertyMetadata(0d));
 
     public static readonly DependencyProperty HeightProperty =
-        DependencyProperty.Register("Height", typeof(int), typeof(Iterator), new PropertyMetadata(0));
+        DependencyProperty.Register("Height", typeof(double), typeof(Iterator), new PropertyMetadata(0d));
   }
 
   abstract class Iterator<T> : Iterator where T : IterFunc {
@@ -233,10 +250,10 @@ namespace JuliaSet {
       set { func = value; }
     }
 
-    public Iterator(T func, long iters, double thresh)
-      : base(iters, thresh) {
+    public Iterator(T func, long iters, double thresh, IterSeedMode seedMode, Visual sourceVis)
+      : base(iters, thresh, seedMode, sourceVis) {
 
-      this.Func = func;
+      Func = func;
     }
 
   }
@@ -248,8 +265,8 @@ namespace JuliaSet {
       get { return iterThread.IsAlive; }
     }
 
-    public SingleThreadedIterator(T func, long iters, double thresh)
-      : base(func, iters, thresh) {
+    public SingleThreadedIterator(T func, long iters, double thresh, IterSeedMode seedMode, Visual sourceVis)
+      : base(func, iters, thresh, seedMode, sourceVis) {
       iterThread = new Thread(DoIterations) {
         IsBackground = true,
         Name = "JuliaSet Iterator Thread",
@@ -279,8 +296,8 @@ namespace JuliaSet {
       get { return threadCount; }
     }
 
-    public MultiThreadedIterator(T func, long iters, double thresh, int threadCount)
-      : base(func, iters, thresh) {
+    public MultiThreadedIterator(T func, long iters, double thresh, IterSeedMode seedMode, Visual sourceVis, int threadCount)
+      : base(func, iters, thresh, seedMode, sourceVis) {
       this.threadCount = threadCount;
       iterThreads = new Thread[threadCount];
       syncEvents = new ManualResetEvent[threadCount];
@@ -296,8 +313,8 @@ namespace JuliaSet {
       }
     }
 
-    public MultiThreadedIterator(T func, long iters, double thresh)
-      : this(func, iters, thresh, Environment.ProcessorCount) { }
+    public MultiThreadedIterator(T func, long iters, double thresh, IterSeedMode seedMode, Visual sourceVis)
+      : this(func, iters, thresh, seedMode, sourceVis, Environment.ProcessorCount) { }
 
     protected abstract void DoIterations(int id);
 

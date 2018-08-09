@@ -1,10 +1,12 @@
-﻿using System;
+﻿using JuliaSetRender;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace JuliaSet {
   class LiveETMIterator : SingleThreadedIterator<IterFunc> {
@@ -14,8 +16,8 @@ namespace JuliaSet {
 
     readonly object sizeLock = new object();
 
-    public LiveETMIterator(IterFunc func, long iters, double thresh)
-      : base(func, iters, thresh) {
+    public LiveETMIterator(IterFunc func, long iters, double thresh, IterSeedMode seedMode, Visual sourceVis)
+      : base(func, iters, thresh, seedMode, sourceVis) {
     }
 
     public override void Start() {
@@ -69,8 +71,17 @@ namespace JuliaSet {
                 for (int col = 0; col < bWidth; col++) {
                   j = row * bWidth + col;
 
-                  result[j] = Math.Exp(-Complex.Abs(
-                    points[j] = origPoints[j] = new Complex((col + offsX) * scaleSpl, (row + offsY) * scaleSpl)));
+                  origPoints[j] = new Complex((col + offsX) * scaleSpl, (row + offsY) * scaleSpl);
+
+                  switch (seedMode) {
+                    case IterSeedMode.Zero:
+                      points[j] = 0;
+                      break;
+                    case IterSeedMode.Coordinate:
+                      points[j] = origPoints[j];
+                      break;
+                  }
+                  result[j] = Math.Exp(-points[j].Magnitude);
 
                   isAlive[j] = result[j] < thresh;
 
